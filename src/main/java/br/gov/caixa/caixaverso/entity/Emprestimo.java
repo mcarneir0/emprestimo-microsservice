@@ -18,5 +18,5 @@ public class Emprestimo {
     private String tipoAmortizacao;     // para ENUM
     private String status;              // para ENUM
     private Integer taxaJurosMensal;
-    private List<Parcelas> parcelas;
+    private List<Parcela> parcelas;
 }

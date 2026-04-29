@@ -1,7 +1,7 @@
 package br.gov.caixa.caixaverso.dto;
 
 import br.gov.caixa.caixaverso.entity.Emprestimo;
-import br.gov.caixa.caixaverso.entity.Parcelas;
+import br.gov.caixa.caixaverso.entity.Parcela;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -17,7 +17,7 @@ public record EmprestimoResponseDTO(
         String tipoAmortizacao,
         Integer taxaJurosMensal,
         String status,
-        List<Parcelas> parcelas
+        List<Parcela> parcelas
 ) {
     public static EmprestimoResponseDTO from(Emprestimo emprestimo) {
         return EmprestimoResponseDTO

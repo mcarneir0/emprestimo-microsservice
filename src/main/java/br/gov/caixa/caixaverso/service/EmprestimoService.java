@@ -3,7 +3,7 @@ package br.gov.caixa.caixaverso.service;
 import br.gov.caixa.caixaverso.dto.EmprestimoRequestDTO;
 import br.gov.caixa.caixaverso.dto.EmprestimoResponseDTO;
 import br.gov.caixa.caixaverso.entity.Emprestimo;
-import br.gov.caixa.caixaverso.entity.Parcelas;
+import br.gov.caixa.caixaverso.entity.Parcela;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.math.BigDecimal;
@@ -19,7 +19,7 @@ public class EmprestimoService {
 
     public EmprestimoResponseDTO criarEmprestimo(EmprestimoRequestDTO emprestimoRequestDTO) {
 
-        List<Parcelas> parcelas = calcularParcelas(
+        List<Parcela> parcelas = calcularParcelas(
                 emprestimoRequestDTO.valorTotal(),
                 emprestimoRequestDTO.quantidadeParcelas(),
                 emprestimoRequestDTO.taxaJurosMensal(),
@@ -40,20 +40,20 @@ public class EmprestimoService {
         return EmprestimoResponseDTO.from(novoEmprestimo);
     }
 
-    public static List<Parcelas> calcularParcelas(
+    public static List<Parcela> calcularParcelas(
             BigDecimal saldoDevedor,
             Integer quantidadeParcelas,
             Integer taxaJurosMensal,
             String tipoAmortizacao
     ) {
 
-        List<Parcelas> parcelas = new ArrayList<>();
+        List<Parcela> parcelas = new ArrayList<>();
+        LocalDate dataVencimento = LocalDate.now();
 
         if (tipoAmortizacao.equalsIgnoreCase("SAC")) {
 
             BigDecimal valorAmortizacao = saldoDevedor.divide(
                     new BigDecimal(quantidadeParcelas), 2, RoundingMode.HALF_UP);
-            LocalDate dataVencimento = LocalDate.now();
 
             for (int i = 1; i <= quantidadeParcelas; i++){
 
@@ -62,7 +62,7 @@ public class EmprestimoService {
                 saldoDevedor = saldoDevedor.subtract(valorAmortizacao);
                 dataVencimento = dataVencimento.plusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
 
-                parcelas.add(new Parcelas(
+                parcelas.add(new Parcela(
                         UUID.randomUUID(),
                         i,
                         dataVencimento,
@@ -76,8 +76,32 @@ public class EmprestimoService {
         }
 
         else {
-            // TODO: Calcular usando método PRICE
-            return null;
+
+            BigDecimal valorPrestacao = saldoDevedor.multiply(
+                    BigDecimal.valueOf(
+                            Math.pow(1 + ((double) taxaJurosMensal / 100), quantidadeParcelas)
+                                    * ((double) taxaJurosMensal / 100)
+                                    / (Math.pow(1 + ((double) taxaJurosMensal / 100), quantidadeParcelas) - 1)))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            for (int i = 1; i <= quantidadeParcelas; i++){
+
+                BigDecimal valorJuros = saldoDevedor.multiply(BigDecimal.valueOf((double) taxaJurosMensal / 100));
+                BigDecimal valorAmortizacao = valorPrestacao.subtract(valorJuros);
+                saldoDevedor = saldoDevedor.subtract(valorAmortizacao);
+                dataVencimento = dataVencimento.plusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+
+                parcelas.add(new Parcela(
+                        UUID.randomUUID(),
+                        i,
+                        dataVencimento,
+                        valorAmortizacao.setScale(2, RoundingMode.HALF_UP),
+                        valorJuros.setScale(2, RoundingMode.HALF_UP),
+                        valorPrestacao,
+                        "PENDENTE",
+                        saldoDevedor.setScale(2, RoundingMode.HALF_UP)
+                ));
+            }
         }
 
         return parcelas;    //  Retornar lista de Parcelas (array)

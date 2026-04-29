@@ -11,7 +11,7 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
-public class Parcelas {
+public class Parcela {
 
     private UUID id;
     private Integer ordem;
