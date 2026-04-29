@@ -1,5 +1,6 @@
 package br.gov.caixa.caixaverso.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @Data
 @Builder
+@AllArgsConstructor
 public class Parcelas {
 
     private UUID id;
